@@ -132,7 +132,7 @@ impl Client {
             }
 
             if let Some(csrf_token) =
-                cookie_store.get(server_url.domain().unwrap(), "/", "csrf-token")
+                cookie_store.get(server_url.domain().or(server_url.host_str()).unwrap(), "/", "csrf-token")
             {
                 headers.insert(
                     "csrf-token",
