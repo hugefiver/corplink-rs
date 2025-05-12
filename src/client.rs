@@ -131,9 +131,11 @@ impl Client {
                     .insert_raw(&RawCookie::new("device_name", device_name), &server_url);
             }
 
-            if let Some(csrf_token) =
-                cookie_store.get(server_url.domain().or(server_url.host_str()).unwrap(), "/", "csrf-token")
-            {
+            if let Some(csrf_token) = cookie_store.get(
+                server_url.domain().or(server_url.host_str()).unwrap(),
+                "/",
+                "csrf-token",
+            ) {
                 headers.insert(
                     "csrf-token",
                     header::HeaderValue::from_str(csrf_token.value()).unwrap(),
@@ -756,7 +758,11 @@ impl Client {
         let address6 = (!wg_info.ipv6.is_empty())
             .then_some(format!("{}/128", wg_info.ipv6))
             .unwrap_or("".into());
-        let route = [wg_info.setting.vpn_route_split, wg_info.setting.v6_route_split].concat();
+        let route = [
+            wg_info.setting.vpn_route_split,
+            wg_info.setting.v6_route_split,
+        ]
+        .concat();
 
         // corplink config
         let wg_conf = WgConf {
