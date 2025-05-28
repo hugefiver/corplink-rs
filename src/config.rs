@@ -51,7 +51,7 @@ pub struct Config {
 impl fmt::Display for Config {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let s = serde_json::to_string_pretty(self).unwrap();
-        write!(f, "{}", s)
+        write!(f, "{s}")
     }
 }
 
@@ -59,10 +59,10 @@ impl Config {
     pub async fn from_file(file: &str) -> Config {
         let conf_str = fs::read_to_string(file)
             .await
-            .unwrap_or_else(|e| panic!("failed to read config file {}: {}", file, e));
+            .unwrap_or_else(|e| panic!("failed to read config file {file}: {e}"));
 
         let mut conf: Config = serde_json::from_str(&conf_str[..])
-            .unwrap_or_else(|e| panic!("failed to parse config file {}: {}", file, e));
+            .unwrap_or_else(|e| panic!("failed to parse config file {file}: {e}"));
 
         conf.conf_file = Some(file.to_string());
         let mut update_conf = false;

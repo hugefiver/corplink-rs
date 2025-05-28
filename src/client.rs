@@ -42,7 +42,7 @@ impl fmt::Display for Error {
         match self {
             Error::ReqwestError(err) => err.fmt(f),
             Error::Error(err) => {
-                write!(f, "{}", err)
+                write!(f, "{err}")
             }
         }
     }
@@ -230,7 +230,7 @@ impl Client {
             return Err(Error::ReqwestError(err));
         }
         let resp = resp.unwrap();
-        log::debug!("api {:#?} resp: {:#?}", api, resp);
+        log::debug!("api {api:#?} resp: {resp:#?}");
         Ok(resp)
     }
 
@@ -251,14 +251,14 @@ impl Client {
                     };
                 }
                 Err(e) => {
-                    log::warn!("failed to parse date in header, ignore it: {}", e);
+                    log::warn!("failed to parse date in header, ignore it: {e}");
                 }
             }
         }
     }
 
     pub fn need_login(&self) -> bool {
-        return self.conf.state.is_none() || self.conf.state.as_ref().unwrap() == &State::Init;
+        self.conf.state.is_none() || self.conf.state.as_ref().unwrap() == &State::Init
     }
 
     async fn check_tps_token(&mut self, token: &String) -> Result<String, Error> {
@@ -372,7 +372,7 @@ impl Client {
     ) -> Result<String, Error> {
         return match self.get_otp_uri(tps_login, method).await {
             Ok(url) => {
-                if url == "" {
+                if url.is_empty() {
                     self.request_otp_code().await
                 } else {
                     Ok(url)
@@ -552,7 +552,7 @@ impl Client {
 
     async fn handle_logout_err(&mut self, msg: String) -> Error {
         self.change_state(State::Init).await;
-        Error::Error(format!("operation failed because of logout: {}", msg))
+        Error::Error(format!("operation failed because of logout: {msg}"))
     }
 
     async fn list_vpn(&mut self) -> Result<Vec<RespVpnInfo>, Error> {
@@ -584,7 +584,7 @@ impl Client {
                 vpn.en_name,
                 match latency {
                     -1 => " timeout".to_string(),
-                    _ => format!(", latency {}ms", latency),
+                    _ => format!(", latency {latency}ms"),
                 }
             );
             if latency != -1 && latency < min_latency {
@@ -597,7 +597,7 @@ impl Client {
 
     async fn get_first_available_vpn(&mut self, vpn_info: Vec<RespVpnInfo>) -> Option<RespVpnInfo> {
         for vpn in vpn_info {
-            let latency = self.ping_vpn(vpn.ip.clone(), vpn.api_port.clone()).await;
+            let latency = self.ping_vpn(vpn.ip.clone(), vpn.api_port).await;
             if latency != -1 {
                 return Some(vpn);
             }
@@ -646,7 +646,7 @@ impl Client {
                 }
             },
             Err(err) => {
-                log::warn!("failed to ping {}:{}: {}", ip, api_port, err);
+                log::warn!("failed to ping {ip}:{api_port}: {err}");
             }
         }
         -1
@@ -792,7 +792,7 @@ impl Client {
             match self.report_vpn_status(conf).await {
                 Ok(_) => (),
                 Err(err) => {
-                    log::warn!("keep alive error: {}", err);
+                    log::warn!("keep alive error: {err}");
                     return;
                 }
             }

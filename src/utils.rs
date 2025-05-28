@@ -30,7 +30,7 @@ pub fn gen_public_key_from_private(private_key: &String) -> Result<String, Box<d
             let public_key = PublicKey::from(&sk);
             Ok(base64.encode(public_key.to_bytes()))
         }
-        Err(e) => Err(format!("failed to base64 decode {}: {}", private_key, e).into()),
+        Err(e) => Err(format!("failed to base64 decode {private_key}: {e}").into()),
     }
 }
 

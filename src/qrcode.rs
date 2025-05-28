@@ -16,7 +16,7 @@ impl TerminalQrCode {
     pub fn print(&self) {
         let code = self.code.clone();
         let width = code.width();
-        let height = (width as f32 / 2 as f32).ceil() as usize;
+        let height = (width as f32 / 2_f32).ceil() as usize;
         let pixels = code.to_colors();
         let mut display = Display::new((width + 2) as u32, (height + 1) as u32);
 
@@ -38,13 +38,13 @@ impl TerminalQrCode {
             match y % 2 {
                 0 => display.set_pixel(
                     x as isize + 1,
-                    (y / 2) as isize + 1,
+                    (y / 2) + 1,
                     '▄',
                     char_colour,
                     colour,
                 ),
                 1 => display
-                    .get_mut_pixel(x as isize + 1, ((y - 1) / 2) as isize + 1)
+                    .get_mut_pixel(x as isize + 1, ((y - 1) / 2) + 1)
                     .set_colour(colour),
                 _ => println!("That shouldn't happen"),
             }

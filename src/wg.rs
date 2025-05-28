@@ -92,7 +92,7 @@ impl UAPIClient {
             if route.contains("/") {
                 buff.push_str(format!("route={route}\n").as_str());
             } else {
-                let prefix_len = route.contains(":").then_some(128).unwrap_or(32);
+                let prefix_len = if route.contains(":") { 128 } else { 32 };
                 buff.push_str(format!("route={route}/{prefix_len}\n").as_str());
             }
         }
@@ -105,7 +105,7 @@ impl UAPIClient {
         if !s.contains("errno=0") {
             return Err(io::Error::new(
                 io::ErrorKind::UnexpectedEof,
-                format!("uapi returns unexpected result: {}", s),
+                format!("uapi returns unexpected result: {s}"),
             ));
         }
         Ok(())
@@ -127,7 +127,7 @@ impl UAPIClient {
             let s = String::from_utf8(data).unwrap();
             for line in s.split('\n') {
                 if line.starts_with("last_handshake_time_sec") {
-                    match line.trim_end().split('=').last().unwrap().parse::<i64>() {
+                    match line.trim_end().split('=').next_back().unwrap().parse::<i64>() {
                         Ok(timestamp) => {
                             if timestamp == 0 {
                                 // do nothing because it's invalid
@@ -151,13 +151,13 @@ impl UAPIClient {
                             }
                         }
                         Err(err) => {
-                            log::warn!("parse last handshake of {} fail: {}", name, err)
+                            log::warn!("parse last handshake of {name} fail: {err}")
                         }
                     }
                     break;
                 } else if line.starts_with("errno") {
                     if line != "errno=0" {
-                        log::warn!("uapi of {} return: fail: {}", name, line)
+                        log::warn!("uapi of {name} return: fail: {line}")
                     }
                 } else if line.is_empty() {
                     // reach end

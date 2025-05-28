@@ -67,10 +67,7 @@ impl DNSManager {
                 .insert(service.to_string(), search_response.clone());
 
             log::debug!(
-                "DNS collected for {}, dnsservers: {}, search domain: {}",
-                service,
-                dns_response,
-                search_response
+                "DNS collected for {service}, dnsservers: {dns_response}, search domain: {search_response}"
             )
         }
         Ok(())
@@ -80,10 +77,7 @@ impl DNSManager {
         if dns_servers.is_empty() {
             return Ok(());
         }
-        match self.collect_new_service_dns() {
-            Err(e) => return Err(e),
-            _ => {}
-        }
+        self.collect_new_service_dns()?;
         for service in self.service_dns.keys() {
             Command::new("networksetup")
                 .arg("-setdnsservers")
@@ -112,7 +106,7 @@ impl DNSManager {
                 .args(dns.lines())
                 .status()?;
 
-            log::debug!("DNS server reseted for {} with {}", service, dns);
+            log::debug!("DNS server reseted for {service} with {dns}");
         }
         for (service, search_domain) in &self.service_dns_search {
             Command::new("networksetup")
@@ -121,9 +115,7 @@ impl DNSManager {
                 .args(search_domain.lines())
                 .status()?;
             log::debug!(
-                "DNS search domain reseted for {} with {}",
-                service,
-                search_domain
+                "DNS search domain reseted for {service} with {search_domain}"
             )
         }
         log::debug!("DNS reseted");

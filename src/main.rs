@@ -11,12 +11,10 @@ mod utils;
 mod wg;
 
 #[cfg(windows)]
-use is_elevated;
 
 #[cfg(target_os = "macos")]
 use dns::DNSManager;
 
-use env_logger;
 use std::env;
 use std::process::exit;
 
@@ -24,7 +22,7 @@ use client::Client;
 use config::{Config, WgConf};
 
 fn print_usage_and_exit(name: &str, conf: &str) {
-    println!("usage:\n\t{} {}", name, conf);
+    println!("usage:\n\t{name} {conf}");
     exit(1);
 }
 
@@ -118,7 +116,7 @@ async fn main() {
             Err(e) => {
                 if logout_retry && e.to_string().contains("logout") {
                     // e contains detail message, so just print it out
-                    log::warn!("{}", e);
+                    log::warn!("{e}");
                     logout_retry = false;
                     continue;
                 } else {
@@ -131,14 +129,14 @@ async fn main() {
     let wg_conf = wg_conf.unwrap();
     let protocol = wg_conf.protocol;
     if !wg::start_wg_go(&name, protocol, with_wg_log) {
-        log::warn!("failed to start wg-corplink for {}", name);
+        log::warn!("failed to start wg-corplink for {name}");
         exit(EPERM);
     }
     let mut uapi = wg::UAPIClient { name: name.clone() };
     match uapi.config_wg(&wg_conf).await {
         Ok(_) => {}
         Err(err) => {
-            log::error!("failed to config interface with uapi for {}: {}", name, err);
+            log::error!("failed to config interface with uapi for {name}: {err}");
             exit(EPERM);
         }
     }
@@ -163,7 +161,7 @@ async fn main() {
             match tokio::signal::ctrl_c().await {
                 Ok(_) => {},
                 Err(e) => {
-                    log::warn!("failed to receive signal: {}",e);
+                    log::warn!("failed to receive signal: {e}");
                 },
             }
             log::info!("ctrl+v received");
@@ -187,7 +185,7 @@ async fn main() {
     log::info!("disconnecting vpn...");
     match c.disconnect_vpn(&wg_conf).await {
         Ok(_) => {}
-        Err(e) => log::warn!("failed to disconnect vpn: {}", e),
+        Err(e) => log::warn!("failed to disconnect vpn: {e}"),
     };
 
     wg::stop_wg_go();
@@ -226,5 +224,5 @@ fn check_previlige() {
 fn print_version() {
     let pkg_name = env!("CARGO_PKG_NAME");
     let pkg_version = env!("CARGO_PKG_VERSION");
-    log::info!("running {}@{}", pkg_name, pkg_version);
+    log::info!("running {pkg_name}@{pkg_version}");
 }
