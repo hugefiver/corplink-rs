@@ -28,7 +28,8 @@ use crate::totp::{totp_offset, TIME_STEP};
 use crate::utils;
 
 const COOKIE_FILE_SUFFIX: &str = "cookies.json";
-const USER_AGENT: &str = "CorpLink/201000 (GooglePixel; Android 10; en)";
+const USER_AGENT: &str = "Android/2.2.19(CorpLink/2.2.19 (Huawei Duo 2; Android 15; en))";
+// const USER_AGENT: &str = "Linux/3.0.21(Corplink/3.0.21 (linux; HomoOS; en))";
 
 #[derive(Debug)]
 pub enum Error {
