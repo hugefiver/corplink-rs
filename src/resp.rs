@@ -67,6 +67,7 @@ pub struct RespVpnInfo {
     pub icon: String,
     pub id: i32,
     pub timeout: i32,
+    pub exclude: bool,
 }
 
 #[derive(serde::Deserialize, Debug)]

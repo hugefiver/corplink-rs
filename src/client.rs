@@ -225,11 +225,15 @@ impl Client {
                 break;
             }
         }
-        let resp = resp.json::<Resp<T>>().await;
-        if let Err(err) = resp {
-            return Err(Error::ReqwestError(err));
-        }
-        let resp = resp.unwrap();
+        let resp = resp.json::<serde_json::Value>().await;
+        let Ok(resp) = resp else {
+            return Err(Error::Error("failed to parse response".to_string()));
+        };
+        // log::debug!("api resp: {resp}");
+        let resp: Resp<T> = serde_json::from_value(resp).map_err(|e| {
+            log::error!("failed to parse response: {e}");
+            Error::Error("failed to parse response".to_string())
+        })?;
         log::debug!("api {api:#?} resp: {resp:#?}");
         Ok(resp)
     }
@@ -696,19 +700,18 @@ impl Client {
             vpn_info.len(),
             vpn_info
                 .iter()
-                .map(|i| i.en_name.clone())
+                .map(|i| format!("{}({})", i.name, i.en_name))
                 .collect::<Vec<String>>()
         );
-        let filtered_vpn = vpn_info
+        log::debug!("vpn info: {vpn_info:#?}");
+        let filtered_vpn: Vec<_> = vpn_info
             .into_iter()
             .filter(|vpn| {
-                if let Some(server_name) = self.conf.vpn_server_name.clone() {
-                    if vpn.en_name != server_name {
-                        log::info!("skip {}, expect {}", vpn.en_name, server_name);
-                        return false;
-                    }
+                !vpn.exclude && if let Some(server_name) = self.conf.vpn_server_name.clone() {
+                    vpn.en_name == *server_name || vpn.name == *server_name
+                } else {
+                    true
                 }
-                true
             })
             .filter(|vpn| {
                 let mode = match vpn.protocol_mode {
@@ -730,6 +733,14 @@ impl Client {
                 }
             })
             .collect();
+        log::info!(
+            "after filter, {} vpn(s) left, details: {:?}",
+            filtered_vpn.len(),
+            filtered_vpn
+                .iter()
+                .map(|i| format!("{}({})", i.name, i.en_name))
+                .collect::<Vec<String>>()
+        );
 
         let vpn = match self.conf.vpn_select_strategy.clone() {
             Some(strategy) => match strategy.as_str() {
