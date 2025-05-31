@@ -5,7 +5,7 @@ edition = "2021"
 
 [dependencies]
 regex = "1.11"
-reqwest = { version = "0.11", features = [
+reqwest = { version = "0.12", features = [
     "json",
     "gzip",
     "deflate",
@@ -17,14 +17,14 @@ tokio = { version = "1.45", features = ["full"] }
 futures = "0.3"
 serde_json = "1.0"
 serde = { version = "1.0", features = ["derive"] }
-cookie = "0.17"
-cookie_store = "0.20"
-reqwest_cookie_store = "0.6"
+cookie = "0.18"
+cookie_store = "0.21"
+reqwest_cookie_store = "0.8"
 tinytemplate = "1.2"
 md5 = "0.7"
 sha2 = "0.10"
-base32 = "0.4"
-base64 = "0.21"
+base32 = "0.5"
+base64 = "0.22"
 rand = "0.8"
 x25519-dalek = { version = "2.0", features = ["static_secrets"] }
 httpdate = "1.0"
@@ -40,14 +40,14 @@ uds_windows = "1.1"
 # string_template = "0.2"
 # dependency for basic-otp
 # basic-otp = "0.1"
-hmac-sha1 = "0.1"
+hmac-sha1 = "0.2"
 byteorder = "1.5"
 log = "0.4"
-env_logger = "0.10"
+env_logger = "0.11"
 libc = "0.2"
 terminal_graphics = "0.1.5"
 qrcode = "0.14.1"
 
 
 [build-dependencies]
-bindgen = "0.68"
+bindgen = "0.71"

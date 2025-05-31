@@ -1,6 +1,6 @@
 // code from basic-otp 0.1.1
 use byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
-use hmacsha1::{hmac_sha1, SHA1_DIGEST_BYTES};
+use hmac_sha1::{hmac_sha1, SHA1_DIGEST_BYTES};
 use std::io::Cursor;
 use std::time;
 

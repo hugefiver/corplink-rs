@@ -4,7 +4,6 @@ use std::io::{self, BufRead};
 use base32::Alphabet;
 use base64::Engine;
 use base64::engine::general_purpose::STANDARD as base64;
-use rand::rngs::OsRng;
 use x25519_dalek::{PublicKey, StaticSecret};
 
 pub async fn read_line() -> String {
@@ -12,11 +11,11 @@ pub async fn read_line() -> String {
 }
 
 pub fn b32_decode(s: &str) -> Vec<u8> {
-    base32::decode(Alphabet::RFC4648 { padding: true }, s).unwrap()
+    base32::decode(Alphabet::Rfc4648 { padding: true }, s).unwrap()
 }
 
 pub fn gen_wg_keypair() -> (String, String) {
-    let csprng = OsRng {};
+    let csprng = rand::thread_rng();
     let sk = StaticSecret::random_from_rng(csprng);
     let pk = PublicKey::from(&sk);
     (base64.encode(pk.to_bytes()), base64.encode(sk.to_bytes()))
