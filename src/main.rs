@@ -10,9 +10,9 @@ mod totp;
 mod utils;
 mod wg;
 
+use dns::DNSManagerTrait;
 #[cfg(windows)]
 
-#[cfg(target_os = "macos")]
 use dns::DNSManager;
 
 use std::env;
@@ -69,7 +69,6 @@ async fn main() {
     let mut conf = Config::from_file(&conf_file).await;
     let name = conf.interface_name.clone().unwrap();
 
-    #[cfg(target_os = "macos")]
     let use_vpn_dns = conf.use_vpn_dns.unwrap_or(false);
 
     match conf.server {
@@ -127,6 +126,7 @@ async fn main() {
     }
     log::info!("start wg-corplink for {}", &name);
     let wg_conf = wg_conf.unwrap();
+    log::info!("wg_conf.dns: {:?}", &wg_conf.dns);
     let protocol = wg_conf.protocol;
     if !wg::start_wg_go(&name, protocol, with_wg_log) {
         log::warn!("failed to start wg-corplink for {name}");
@@ -141,10 +141,12 @@ async fn main() {
         }
     }
 
+    #[cfg(any(target_os = "linux", target_os = "windows"))]
+    let mut dns_manager = DNSManager::with_interface(name);
+
     #[cfg(target_os = "macos")]
     let mut dns_manager = DNSManager::new();
 
-    #[cfg(target_os = "macos")]
     if use_vpn_dns {
         match dns_manager.set_dns(vec![&wg_conf.dns], vec![]) {
             Ok(_) => {}
@@ -190,7 +192,6 @@ async fn main() {
 
     wg::stop_wg_go();
 
-    #[cfg(target_os = "macos")]
     if use_vpn_dns {
         match dns_manager.restore_dns() {
             Ok(_) => {}
