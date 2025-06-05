@@ -3,9 +3,19 @@ name = "corplink-rs"
 version = "0.5.1"
 edition = "2021"
 
+
+[features]
+default = ["rustls"]
+rustls = ["reqwest/rustls-tls"]
+native-tls = ["reqwest/native-tls"]
+
+
 [dependencies]
 regex = "1.11"
-reqwest = { version = "0.12", features = [
+reqwest = { version = "0.12", default-features = false, features = [
+    "charset",
+    "http2",
+    "system-proxy",
     "json",
     "gzip",
     "deflate",
