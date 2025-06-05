@@ -62,10 +62,23 @@ unsafe impl Send for Client {}
 unsafe impl Sync for Client {}
 
 pub async fn get_company_url(code: &str) -> Result<RespCompany, Error> {
-    let c = ClientBuilder::new()
-        // alow invalid certs because this cert is signed by corplink
+    let builder = reqwest::ClientBuilder::new();
+
+    // #[cfg(all(feature = "rustls", feature = "native-tls"))]
+    // {
+    //     builder = builder
+    //         .use_native_tls();
+    // }
+
+    #[cfg(feature = "__tls")]
+    let c = builder
+        // allow invalid certs because this cert is signed by corplink
         .danger_accept_invalid_certs(true)
         .build();
+
+    #[cfg(not(feature = "__tls"))]
+    let c = builder.build();
+
     if let Err(err) = c {
         return Err(Error::ReqwestError(err));
     }
@@ -201,9 +214,9 @@ impl Client {
         let rb = match body {
             Some(body) => {
                 let body = serde_json::to_string(&body).unwrap();
-                self.c.post(url).body(body)
+                self.c.post(&url).body(body)
             }
-            None => self.c.get(url),
+            None => self.c.get(&url),
         };
 
         let resp = match rb.send().await {
@@ -229,7 +242,19 @@ impl Client {
         let Ok(resp) = resp else {
             return Err(Error::Error("failed to parse response".to_string()));
         };
+
+        // let mut file = std::fs::OpenOptions::new()
+        //     .write(true)
+        //     .create(true)
+        //     .append(true)
+        //     .open("api_resp.json")
+        //     .unwrap();
+        // let _ = writeln!(file, "// {api:?}: {url}");
+        // let resp_str = serde_json::to_string(&resp).unwrap();
+        // let _ = writeln!(file, "{resp_str}\n");
+
         // log::debug!("api resp: {resp}");
+
         let resp: Resp<T> = serde_json::from_value(resp).map_err(|e| {
             log::error!("failed to parse response: {e}");
             Error::Error("failed to parse response".to_string())
@@ -423,8 +448,8 @@ impl Client {
         for resp in tps_login_resp {
             tps_login.insert(resp.alias.clone(), resp);
         }
-        for method in resp.login_orders {
-            let otp_uri = self.get_otp_uri_by_otp(&tps_login, &method).await;
+        for method in &resp.login_orders {
+            let otp_uri = self.get_otp_uri_by_otp(&tps_login, method).await;
             if let Err(e) = otp_uri {
                 log::warn!("failed to login with method {method}: {e}");
                 continue;
@@ -454,6 +479,7 @@ impl Client {
             log::warn!("failed to get otp code");
             return Ok(());
         }
+        log::warn!("supported login methods: {:?}", resp.login_orders);
         panic!("no available login method, please provide a valid platform")
     }
 
@@ -707,11 +733,12 @@ impl Client {
         let filtered_vpn: Vec<_> = vpn_info
             .into_iter()
             .filter(|vpn| {
-                !vpn.exclude && if let Some(server_name) = self.conf.vpn_server_name.clone() {
-                    vpn.en_name == *server_name || vpn.name == *server_name
-                } else {
-                    true
-                }
+                !vpn.exclude
+                    && if let Some(server_name) = self.conf.vpn_server_name.clone() {
+                        vpn.en_name == *server_name || vpn.name == *server_name
+                    } else {
+                        true
+                    }
             })
             .filter(|vpn| {
                 let mode = match vpn.protocol_mode {

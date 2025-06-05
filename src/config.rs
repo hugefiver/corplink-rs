@@ -1,8 +1,10 @@
+use serde_with::{serde_as, DefaultOnNull};
 use std::fmt;
 use tokio::fs;
 
-use serde::{de, Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
 
+use crate::dns::VPNDnsMode;
 use crate::state::State;
 use crate::utils;
 
@@ -26,6 +28,7 @@ pub const PLATFORM_AAD: &str = "aad";
 pub const STRATEGY_LATENCY: &str = "latency";
 pub const STRATEGY_DEFAULT: &str = "default";
 
+#[serde_as]
 #[derive(Serialize, Deserialize, Clone)]
 pub struct Config {
     pub company_name: String,
@@ -46,8 +49,9 @@ pub struct Config {
     pub vpn_server_name: Option<String>,
     pub vpn_select_strategy: Option<String>,
 
+    #[serde_as(deserialize_as = "DefaultOnNull")]
     #[serde(default)]
-    pub use_vpn_dns: super::dns::VPNDnsMode,
+    pub use_vpn_dns: VPNDnsMode,
 }
 
 impl fmt::Display for Config {

@@ -1,3 +1,4 @@
+use serde::{Deserialize, Serialize};
 use std::{any::Any, cell::RefCell, io::Error, sync::Arc};
 
 #[cfg(target_os = "macos")]
@@ -12,7 +13,6 @@ mod linux;
 
 #[cfg(target_os = "windows")]
 mod win;
-use serde::{Deserialize, Serialize};
 #[cfg(target_os = "windows")]
 pub use win::DNSManager;
 
@@ -42,9 +42,11 @@ impl DNSManagerTrait for NopDNSManager {
     }
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
+#[derive(Serialize, Deserialize, Clone, Debug, Default)]
 #[serde(rename_all = "snake_case")]
 pub enum VPNDnsMode {
+    #[serde(alias = "off")]
+    #[default]
     Off,
 
     #[serde(alias = "on")]
@@ -61,18 +63,11 @@ pub enum VPNDnsMode {
     #[cfg(target_os = "linux")]
     #[serde(alias = "resolvctl")]
     Resolvectl,
-
     // TODO: Implement this for systemd-resolved
-    // 
+    //
     // #[cfg(target_os = "linux")]
     // #[serde(alias = "systemd-resolved")]
     // SystemdResolved,
-}
-
-impl Default for VPNDnsMode {
-    fn default() -> Self {
-        VPNDnsMode::Off
-    }
 }
 
 impl VPNDnsMode {
@@ -86,7 +81,9 @@ impl VPNDnsMode {
                 Arc::new(RefCell::new(linux::ResolvConfDNSManager::new1(true)))
             }
             #[cfg(target_os = "linux")]
-            VPNDnsMode::ResolvConf => Arc::new(RefCell::new(linux::ResolvConfDNSManager::new1(false))),
+            VPNDnsMode::ResolvConf => {
+                Arc::new(RefCell::new(linux::ResolvConfDNSManager::new1(false)))
+            }
             #[cfg(target_os = "linux")]
             VPNDnsMode::Resolvectl => Arc::new(RefCell::new(linux::ResolvectlDNSManager::new())),
             // #[cfg(target_os = "linux")]

@@ -10,10 +10,9 @@ mod totp;
 mod utils;
 mod wg;
 
-use dns::DNSManagerTrait;
 #[cfg(windows)]
-
 use dns::DNSManager;
+use dns::DNSManagerTrait;
 
 use std::env;
 use std::process::exit;
@@ -60,6 +59,9 @@ pub const ETIMEDOUT: i32 = 110;
 async fn main() {
     #[cfg(feature = "rustls")]
     {
+        rustls::crypto::ring::default_provider()
+            .install_default()
+            .expect("failed to set default crypto provider");
     }
 
     // NOTE: If you want to debug, you should set `RUST_LOG` env to `debug` and run corplink-rs in root
