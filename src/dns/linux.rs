@@ -1,16 +1,18 @@
+use super::DNSManagerTrait;
+use std::fmt::format;
+use std::fs;
 use std::io::Error;
 use std::process::Command;
-use super::DNSManagerTrait;
 
-pub struct DNSManager {
+pub struct ResolvectlDNSManager {
     interface: String,
     original_dns: Option<String>,
     original_search: Option<String>,
 }
 
-impl DNSManagerTrait for DNSManager {
-    fn new() -> DNSManager {
-        DNSManager {
+impl DNSManagerTrait for ResolvectlDNSManager {
+    fn new() -> ResolvectlDNSManager {
+        ResolvectlDNSManager {
             interface: String::new(),
             original_dns: None,
             original_search: None,
@@ -28,13 +30,17 @@ impl DNSManagerTrait for DNSManager {
             .arg(&self.interface)
             .output()?;
         let output = String::from_utf8_lossy(&status.stdout);
-        
+
         // Parse and store original DNS servers and search domains
-        for line in output.lines() {
-            if line.contains("DNS Servers:") {
-                self.original_dns = Some(line.split(':').nth(1).unwrap_or("").trim().to_string());
-            } else if line.contains("DNS Domain:") {
-                self.original_search = Some(line.split(':').nth(1).unwrap_or("").trim().to_string());
+        if self.original_dns.is_none() && self.original_search.is_none() {
+            for line in output.lines() {
+                if line.contains("DNS Servers:") {
+                    self.original_dns =
+                        Some(line.split(':').nth(1).unwrap_or("").trim().to_string());
+                } else if line.contains("DNS Domain:") {
+                    self.original_search =
+                        Some(line.split(':').nth(1).unwrap_or("").trim().to_string());
+                }
             }
         }
 
@@ -93,14 +99,80 @@ impl DNSManagerTrait for DNSManager {
         log::debug!("DNS settings restored for interface {}", self.interface);
         Ok(())
     }
+
+    fn with_interface(&mut self, interface: String) {
+        self.interface = interface;
+    }
 }
 
-impl DNSManager {
-    pub fn with_interface(interface: String) -> Self {
-        DNSManager {
-            interface,
-            original_dns: None,
-            original_search: None,
+pub struct ResolvConfDNSManager {
+    restore: Option<String>,
+
+    use_bind: bool,
+}
+
+impl DNSManagerTrait for ResolvConfDNSManager {
+    fn new() -> ResolvConfDNSManager {
+        ResolvConfDNSManager::new1(false)
+    }
+
+    fn set_dns(&mut self, dns_servers: Vec<&str>, dns_search: Vec<&str>) -> Result<(), Error> {
+        if dns_servers.is_empty() {
+            return Ok(());
+        }
+
+        // Save current resolv.conf content
+        if self.restore.is_none() {
+            self.restore = Some(fs::read_to_string("/etc/resolv.conf")?);
+        }
+
+        let mut resolv_conf = String::new();
+        for server in dns_servers {
+            resolv_conf.push_str(&format!("nameserver {}\n", server));
+        }
+        for search in dns_search {
+            resolv_conf.push_str(&format!("search {}\n", search));
+        }
+
+        if self.use_bind {
+            // create temp dir
+            fs::create_dir_all("/run/corplink");
+            fs::write("/run/corplink/resolv.conf", resolv_conf)?;
+            // mount with bind
+            Command::new("mount")
+                .args(["--bind", "/run/corplink/resolv.conf", "/etc/resolv.conf"])
+                .status()?;
+        } else {
+            fs::write("/etc/resolv.conf", resolv_conf)?;
+        }
+
+        Ok(())
+    }
+
+    fn restore_dns(&self) -> Result<(), Error> {
+        if self.restore.is_none() {
+            return Ok(());
+        }
+
+        if self.use_bind {
+            // unmount resolv.conf
+            Command::new("umount").arg("/etc/resolv.conf").status()?;
+            // remove temp file
+            fs::remove_file("/run/corplink/resolv.conf")?;
+        } else {
+            fs::write("/etc/resolv.conf", self.restore.as_ref().unwrap())?;
+        }
+
+        log::debug!("DNS: resolv.conf restored");
+        Ok(())
+    }
+}
+
+impl ResolvConfDNSManager {
+    pub fn new1(use_bind: bool) -> ResolvConfDNSManager {
+        ResolvConfDNSManager {
+            restore: None,
+            use_bind,
         }
     }
-} 
+}

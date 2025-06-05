@@ -58,6 +58,10 @@ pub const ETIMEDOUT: i32 = 110;
 
 #[tokio::main]
 async fn main() {
+    #[cfg(feature = "rustls")]
+    {
+    }
+
     // NOTE: If you want to debug, you should set `RUST_LOG` env to `debug` and run corplink-rs in root
     //  because `check_previlige` will call sudo and drop env if you're not root
     env_logger::init();
@@ -69,7 +73,7 @@ async fn main() {
     let mut conf = Config::from_file(&conf_file).await;
     let name = conf.interface_name.clone().unwrap();
 
-    let use_vpn_dns = conf.use_vpn_dns.unwrap_or(false);
+    let use_vpn_dns = conf.use_vpn_dns.clone();
 
     match conf.server {
         Some(_) => {}
@@ -141,14 +145,11 @@ async fn main() {
         }
     }
 
-    #[cfg(any(target_os = "linux", target_os = "windows"))]
-    let mut dns_manager = DNSManager::with_interface(name);
+    let dns_manager = use_vpn_dns.get_dns_manager();
+    dns_manager.borrow_mut().with_interface(name);
 
-    #[cfg(target_os = "macos")]
-    let mut dns_manager = DNSManager::new();
-
-    if use_vpn_dns {
-        match dns_manager.set_dns(vec![&wg_conf.dns], vec![]) {
+    if !use_vpn_dns.is_off() {
+        match dns_manager.borrow_mut().set_dns(vec![&wg_conf.dns], vec![]) {
             Ok(_) => {}
             Err(err) => {
                 log::warn!("failed to set dns: {}", err);
@@ -192,8 +193,8 @@ async fn main() {
 
     wg::stop_wg_go();
 
-    if use_vpn_dns {
-        match dns_manager.restore_dns() {
+    if !use_vpn_dns.is_off() {
+        match dns_manager.borrow_mut().restore_dns() {
             Ok(_) => {}
             Err(err) => {
                 log::warn!("failed to delete dns: {}", err);

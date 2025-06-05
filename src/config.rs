@@ -1,7 +1,7 @@
 use std::fmt;
 use tokio::fs;
 
-use serde::{Deserialize, Serialize};
+use serde::{de, Deserialize, Serialize};
 
 use crate::state::State;
 use crate::utils;
@@ -45,7 +45,9 @@ pub struct Config {
     pub state: Option<State>,
     pub vpn_server_name: Option<String>,
     pub vpn_select_strategy: Option<String>,
-    pub use_vpn_dns: Option<bool>,
+
+    #[serde(default)]
+    pub use_vpn_dns: super::dns::VPNDnsMode,
 }
 
 impl fmt::Display for Config {

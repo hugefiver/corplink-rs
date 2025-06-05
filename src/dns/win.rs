@@ -102,13 +102,8 @@ impl DNSManagerTrait for DNSManager {
 
         Ok(())
     }
-}
 
-impl DNSManager {
-    pub fn with_interface(interface_name: String) -> Self {
-        Self {
-            interface_name,
-            original_dns: None,
-        }
+    fn with_interface(&mut self, interface_name: String) {
+        self.interface_name = interface_name;
     }
 }
