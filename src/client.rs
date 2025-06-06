@@ -729,17 +729,21 @@ impl Client {
                 .map(|i| format!("{}({})", i.name, i.en_name))
                 .collect::<Vec<String>>()
         );
+
+        let vpn_server_name = self.conf.vpn_server_name.clone();
+        let filter_func: Box<dyn Fn(&str) -> bool> = match &vpn_server_name {
+            None => Box::new(|_| true),
+            Some(x) if x.starts_with("/") && x.ends_with("/") => {
+                let regex_str = &x[1..x.len() - 1];
+                let patt = regex::Regex::new(regex_str).expect(&format!("cannot parse regex: {x}"));
+                Box::new(move |s| patt.is_match(s))
+            }
+            Some(x) => Box::new(move |s| s.contains(x)),
+        };
         log::debug!("vpn info: {vpn_info:#?}");
         let filtered_vpn: Vec<_> = vpn_info
             .into_iter()
-            .filter(|vpn| {
-                !vpn.exclude
-                    && if let Some(server_name) = self.conf.vpn_server_name.clone() {
-                        vpn.en_name == *server_name || vpn.name == *server_name
-                    } else {
-                        true
-                    }
-            })
+            .filter(|vpn| !vpn.exclude && filter_func(&vpn.en_name) && filter_func(&vpn.name))
             .filter(|vpn| {
                 let mode = match vpn.protocol_mode {
                     1 => "tcp",
