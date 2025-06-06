@@ -17,6 +17,7 @@ use serde_json::{json, Map, Value};
 use sha2::Digest;
 
 use crate::api::{ApiName, ApiUrl, URL_GET_COMPANY};
+use crate::config::RoutingMode;
 use crate::config::{
     Config, WgConf, PLATFORM_CORPLINK, PLATFORM_LARK, PLATFORM_LDAP, PLATFORM_OIDC,
     STRATEGY_DEFAULT, STRATEGY_LATENCY,
@@ -735,7 +736,7 @@ impl Client {
             None => Box::new(|_| true),
             Some(x) if x.starts_with("/") && x.ends_with("/") => {
                 let regex_str = &x[1..x.len() - 1];
-                let patt = regex::Regex::new(regex_str).expect(&format!("cannot parse regex: {x}"));
+                let patt = regex::Regex::new(regex_str).unwrap_or_else(|_| panic!("cannot parse regex: {x}"));
                 Box::new(move |s| patt.is_match(s))
             }
             Some(x) => Box::new(move |s| s.contains(x)),
@@ -791,7 +792,7 @@ impl Client {
 
         let key = self.conf.public_key.clone().unwrap();
         log::info!("try to get wg conf from remote");
-        let wg_info = self.fetch_peer_info(&key).await?;
+        let mut wg_info = self.fetch_peer_info(&key).await?;
         let mtu = wg_info.setting.vpn_mtu;
         let dns = wg_info.setting.vpn_dns;
         let peer_key = wg_info.public_key;
@@ -801,11 +802,27 @@ impl Client {
         let address6 = (!wg_info.ipv6.is_empty())
             .then_some(format!("{}/128", wg_info.ipv6))
             .unwrap_or("".into());
-        let route = [
-            wg_info.setting.vpn_route_split,
-            wg_info.setting.v6_route_split,
-        ]
-        .concat();
+        let route = match self.conf.routing.mode {
+            RoutingMode::Split => {
+                let mut routes = wg_info.setting.vpn_route_split.split_off(0);
+                routes.append(&mut wg_info.setting.v6_route_split);
+                if self.conf.routing.include_dynamic_domain_route_split {
+                    if let Some(dyn_domains) = wg_info.setting.vpn_dynamic_domain_route_split.take()
+                    {
+                        routes.extend(dyn_domains.into_iter().flat_map(|(_, xs)| xs));
+                    } else {
+                        log::warn!("prepare routes: `include_dynamic_domain_route_split` has set, but server not provide")
+                    }
+                }
+                routes
+            }
+            RoutingMode::Full => wg_info
+                .setting
+                .vpn_route_full
+                .drain(..)
+                .chain(wg_info.setting.v6_route_full.drain(..))
+                .collect(),
+        };
 
         // corplink config
         let wg_conf = WgConf {

@@ -75,11 +75,25 @@ pub struct RespWgExtraInfo {
     pub vpn_mtu: u32,
     pub vpn_dns: String,
     pub vpn_dns_backup: String,
-    pub vpn_dns_domain_split: Option<Vec<String>>,
+
     pub vpn_route_full: Vec<String>,
     pub vpn_route_split: Vec<String>,
     pub v6_route_full: Vec<String>,
     pub v6_route_split: Vec<String>,
+
+    pub vpn_dns_domain_split: Option<Vec<String>>,
+    pub vpn_dynamic_domain_route_split: Option<Vec<(String, Vec<String>)>>,
+
+    #[serde(default)]
+    pub vpn_global_exclude: VPNGlobalExclude,
+}
+
+
+#[derive(serde::Deserialize, Debug, Default)]
+#[serde(rename_all = "lowercase")]
+pub struct VPNGlobalExclude {
+    pub domains: Option<Vec<String>>,
+    pub ips: Option<Vec<String>>,
 }
 
 #[derive(serde::Deserialize, Debug)]

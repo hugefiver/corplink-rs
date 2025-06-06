@@ -154,7 +154,7 @@ async fn main() {
         match dns_manager.borrow_mut().set_dns(vec![&wg_conf.dns], vec![]) {
             Ok(_) => {}
             Err(err) => {
-                log::warn!("failed to set dns: {}", err);
+                log::warn!("failed to set dns: {err}");
             }
         }
     }
@@ -199,7 +199,7 @@ async fn main() {
         match dns_manager.borrow_mut().restore_dns() {
             Ok(_) => {}
             Err(err) => {
-                log::warn!("failed to delete dns: {}", err);
+                log::warn!("failed to delete dns: {err}");
             }
         }
     }

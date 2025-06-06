@@ -52,6 +52,8 @@ pub struct Config {
     #[serde_as(deserialize_as = "DefaultOnNull")]
     #[serde(default)]
     pub use_vpn_dns: VPNDnsMode,
+
+    pub routing: RouteSetting,
 }
 
 impl fmt::Display for Config {
@@ -117,6 +119,26 @@ impl Config {
         let data = format!("{}", &self);
         fs::write(file, data).await.unwrap();
     }
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct RouteSetting {
+    #[serde(default)]
+    pub mode: RoutingMode,
+
+    // only for `Split` mode
+    #[serde(default)]
+    pub include_dynamic_domain_route_split: bool,
+}
+
+
+#[derive(Serialize, Deserialize, Debug, Clone, Default)]
+#[serde(rename_all = "PascalCase")]
+pub enum RoutingMode {
+    #[default]
+    Split,
+
+    Full
 }
 
 #[derive(Serialize, Clone)]

@@ -43,8 +43,7 @@ impl DNSManagerTrait for DNSManager {
             .status()?;
 
         if !status.success() {
-            return Err(Error::new(
-                std::io::ErrorKind::Other,
+            return Err(Error::other(
                 "Failed to clear existing DNS servers",
             ));
         }
@@ -64,15 +63,14 @@ impl DNSManagerTrait for DNSManager {
                     "add",
                     "dnsserver",
                     &self.interface_name,
-                    &format!("addr={}", dns),
+                    &format!("addr={dns}"),
                     server_type,
                 ])
                 .status()?;
 
             if !status.success() {
-                return Err(Error::new(
-                    std::io::ErrorKind::Other,
-                    format!("Failed to set DNS server {}", dns),
+                return Err(Error::other(
+                    format!("Failed to set DNS server {dns}"),
                 ));
             }
         }
@@ -94,8 +92,7 @@ impl DNSManagerTrait for DNSManager {
             .status()?;
 
         if !status.success() {
-            return Err(Error::new(
-                std::io::ErrorKind::Other,
+            return Err(Error::other(
                 "Failed to restore DNS settings",
             ));
         }
