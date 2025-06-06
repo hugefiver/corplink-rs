@@ -744,7 +744,7 @@ impl Client {
         log::debug!("vpn info: {vpn_info:#?}");
         let filtered_vpn: Vec<_> = vpn_info
             .into_iter()
-            .filter(|vpn| !vpn.exclude && filter_func(&vpn.en_name) && filter_func(&vpn.name))
+            .filter(|vpn| filter_func(&vpn.en_name) && filter_func(&vpn.name))
             .filter(|vpn| {
                 let mode = match vpn.protocol_mode {
                     1 => "tcp",
