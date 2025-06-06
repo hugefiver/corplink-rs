@@ -612,7 +612,8 @@ impl Client {
             let latency = self.ping_vpn(vpn.ip.clone(), vpn.api_port).await;
 
             log::info!(
-                "server name {}{}",
+                "server name {}({}){}",
+                vpn.name,
                 vpn.en_name,
                 match latency {
                     -1 => " timeout".to_string(),
@@ -790,7 +791,7 @@ impl Client {
             None => return Err(Error::Error("no vpn available".to_string())),
         };
         let vpn_addr = format!("{}:{}", vpn.ip, vpn.vpn_port);
-        log::info!("try connect to {}, address {}", vpn.en_name, vpn_addr);
+        log::info!("try connect to {}({}), address {}", vpn.name, vpn.en_name, vpn_addr);
 
         let key = self.conf.public_key.clone().unwrap();
         log::info!("try to get wg conf from remote");
