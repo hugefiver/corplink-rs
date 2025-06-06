@@ -747,7 +747,7 @@ impl Client {
         log::debug!("vpn info: {vpn_info:#?}");
         let filtered_vpn: Vec<_> = vpn_info
             .into_iter()
-            .filter(|vpn| (filter_func(&vpn.en_name) || filter_func(&vpn.name)))
+            .filter(|vpn| !vpn.exclude && (filter_func(&vpn.en_name) || filter_func(&vpn.name)))
             .filter(|vpn| {
                 let mode = match vpn.protocol_mode {
                     1 => "tcp",
@@ -791,7 +791,12 @@ impl Client {
             None => return Err(Error::Error("no vpn available".to_string())),
         };
         let vpn_addr = format!("{}:{}", vpn.ip, vpn.vpn_port);
-        log::info!("try connect to {}({}), address {}", vpn.name, vpn.en_name, vpn_addr);
+        log::info!(
+            "try connect to {}({}), address {}",
+            vpn.name,
+            vpn.en_name,
+            vpn_addr
+        );
 
         let key = self.conf.public_key.clone().unwrap();
         log::info!("try to get wg conf from remote");
