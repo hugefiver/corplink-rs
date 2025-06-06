@@ -53,6 +53,7 @@ pub struct Config {
     #[serde(default)]
     pub use_vpn_dns: VPNDnsMode,
 
+    #[serde(default)]
     pub routing: RouteSetting,
 }
 
@@ -121,7 +122,7 @@ impl Config {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, Default)]
 pub struct RouteSetting {
     #[serde(default)]
     pub mode: RoutingMode,
