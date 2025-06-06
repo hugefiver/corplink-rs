@@ -244,6 +244,7 @@ impl Client {
             return Err(Error::Error("failed to parse response".to_string()));
         };
 
+        // use std::io::Write;
         // let mut file = std::fs::OpenOptions::new()
         //     .write(true)
         //     .create(true)
@@ -736,15 +737,16 @@ impl Client {
             None => Box::new(|_| true),
             Some(x) if x.starts_with("/") && x.ends_with("/") => {
                 let regex_str = &x[1..x.len() - 1];
-                let patt = regex::Regex::new(regex_str).unwrap_or_else(|_| panic!("cannot parse regex: {x}"));
+                let patt = regex::Regex::new(regex_str)
+                    .unwrap_or_else(|_| panic!("cannot parse regex: {x}"));
                 Box::new(move |s| patt.is_match(s))
             }
-            Some(x) => Box::new(move |s| s.contains(x)),
+            Some(x) => Box::new(move |s| x == s),
         };
         log::debug!("vpn info: {vpn_info:#?}");
         let filtered_vpn: Vec<_> = vpn_info
             .into_iter()
-            .filter(|vpn| filter_func(&vpn.en_name) && filter_func(&vpn.name))
+            .filter(|vpn| (filter_func(&vpn.en_name) || filter_func(&vpn.name)))
             .filter(|vpn| {
                 let mode = match vpn.protocol_mode {
                     1 => "tcp",

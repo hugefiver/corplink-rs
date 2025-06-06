@@ -1,3 +1,5 @@
+use serde_with::serde_as;
+
 #[derive(serde::Deserialize, Debug)]
 pub struct Resp<T> {
     pub code: i32,
@@ -70,6 +72,7 @@ pub struct RespVpnInfo {
     pub exclude: bool,
 }
 
+#[serde_as]
 #[derive(serde::Deserialize, Debug)]
 pub struct RespWgExtraInfo {
     pub vpn_mtu: u32,
@@ -82,12 +85,15 @@ pub struct RespWgExtraInfo {
     pub v6_route_split: Vec<String>,
 
     pub vpn_dns_domain_split: Option<Vec<String>>,
+
+    #[serde_as(as = "Option<serde_with::Map<_, _>>")]
     pub vpn_dynamic_domain_route_split: Option<Vec<(String, Vec<String>)>>,
+    #[serde_as(as = "Option<serde_with::Map<_, _>>")]
+    pub vpn_wildcard_dynamic_domain_route_split: Option<Vec<(String, Vec<String>)>>,
 
     #[serde(default)]
     pub vpn_global_exclude: VPNGlobalExclude,
 }
-
 
 #[derive(serde::Deserialize, Debug, Default)]
 #[serde(rename_all = "lowercase")]
