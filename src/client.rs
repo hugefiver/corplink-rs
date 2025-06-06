@@ -817,7 +817,11 @@ impl Client {
                 if self.conf.routing.include_dynamic_domain_route_split {
                     if let Some(dyn_domains) = wg_info.setting.vpn_dynamic_domain_route_split.take()
                     {
-                        routes.extend(dyn_domains.into_iter().flat_map(|(_, xs)| xs));
+                        let mut dyn_domains_ips: Vec<_> = dyn_domains.into_iter().flat_map(|(_, xs)| xs).collect();
+                        dyn_domains_ips.sort();
+                        dyn_domains_ips.dedup();
+                        dyn_domains_ips.retain(|x| !routes.contains(x));
+                        routes.append(&mut dyn_domains_ips);
                     } else {
                         log::warn!("prepare routes: `include_dynamic_domain_route_split` has set, but server not provide")
                     }
