@@ -132,14 +132,15 @@ pub struct RouteSetting {
     pub include_dynamic_domain_route_split: bool,
 }
 
-
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
 #[serde(rename_all = "PascalCase")]
 pub enum RoutingMode {
+    #[serde(alias = "split")]
     #[default]
     Split,
 
-    Full
+    #[serde(alias = "full")]
+    Full,
 }
 
 #[derive(Serialize, Clone)]
