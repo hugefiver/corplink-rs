@@ -123,7 +123,7 @@ impl Client {
         let mut cookie_store = {
             let file = fs::File::open(cookie_file).map(io::BufReader::new);
             match file {
-                Ok(file) => CookieStore::load_json_all(file).unwrap(),
+                Ok(file) => cookie_store::serde::json::load_all(file).unwrap(),
                 Err(_) => CookieStore::default(),
             }
         };
@@ -202,7 +202,7 @@ impl Client {
             .map(io::BufWriter::new)
             .unwrap();
         let c = self.cookie.lock().unwrap();
-        c.save_json(&mut file).unwrap();
+        cookie_store::serde::json::save(&c, &mut file).expect("cannot store cookies")
     }
 
     async fn request<T: DeserializeOwned + fmt::Debug>(
@@ -817,7 +817,8 @@ impl Client {
                 if self.conf.routing.include_dynamic_domain_route_split {
                     if let Some(dyn_domains) = wg_info.setting.vpn_dynamic_domain_route_split.take()
                     {
-                        let mut dyn_domains_ips: Vec<_> = dyn_domains.into_iter().flat_map(|(_, xs)| xs).collect();
+                        let mut dyn_domains_ips: Vec<_> =
+                            dyn_domains.into_iter().flat_map(|(_, xs)| xs).collect();
                         dyn_domains_ips.sort();
                         dyn_domains_ips.dedup();
                         dyn_domains_ips.retain(|x| !routes.contains(x));

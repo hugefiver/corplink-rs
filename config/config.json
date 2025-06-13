@@ -5,5 +5,9 @@
     // will generate corplink.conf
     "conf_name": "corplink",
     // will generate conf in /etc/wireguard
-    "conf_dir": "/etc/wireguard"
+    "conf_dir": "/etc/wireguard",
+    "interface_name": "corplink",
+    "vpn_server_name": null,
+    "vpn_select_strategy": "latency",
+    "use_vpn_dns": "off"
 }

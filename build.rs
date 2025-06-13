@@ -1,7 +1,6 @@
+use bindgen::callbacks::{IntKind, ParseCallbacks};
 use std::env;
 use std::path::PathBuf;
-use bindgen::callbacks::{IntKind, ParseCallbacks};
-
 
 #[derive(Debug)]
 struct DefineParser;
@@ -36,12 +35,10 @@ fn main() {
         // Tell cargo to invalidate the built crate whenever any of the
         // included header files changed.
         .parse_callbacks(Box::new(
-            bindgen::CargoCallbacks,
+            bindgen::CargoCallbacks::new().rerun_on_header_files(false),
         ))
         // parse number define macro as i32 instead of u32
-        .parse_callbacks(Box::new(
-            DefineParser,
-        ))
+        .parse_callbacks(Box::new(DefineParser))
         // Finish the builder and generate the bindings.
         .generate()
         // Unwrap the Result and panic on failure.
