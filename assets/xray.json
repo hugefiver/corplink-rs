@@ -1,0 +1,40 @@
+{
+    "inbounds": [
+        {
+            "listen": "0.0.0.0",
+            "port": 3000,
+            "protocol": "dokodemo-door",
+            "settings": {
+                "network": "tcp,udp",
+                "followRedirect": true
+            },
+            "streamSettings": {
+                "sockopt": {
+                    "tproxy": "tproxy"
+                }
+            },
+            "tag": "dokodemo"
+        },
+        {
+            "listen": "0.0.0.0",
+            "port": 1080,
+            "protocol": "socks",
+            "settings": {
+                "auth": "noauth",
+                "udp": true
+            },
+            "tag": "socks"
+        }
+    ],
+    "outbounds": [
+        {
+            "protocol": "freedom",
+            "settings": {},
+            "streamSettings": {
+                "socketopt": {
+                    "interface": "corplink"
+                }
+            }
+        }
+    ]
+}

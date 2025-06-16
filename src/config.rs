@@ -43,6 +43,8 @@ pub struct Config {
     pub server: Option<String>,
     pub interface_name: Option<String>,
     pub debug_wg: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub log_requests: Option<String>,
     #[serde(skip_serializing)]
     pub conf_file: Option<String>,
     pub state: Option<State>,

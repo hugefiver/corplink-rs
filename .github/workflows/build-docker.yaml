@@ -17,6 +17,7 @@ on:
         type: string
 env:
   IMAGE_NAME: corplink_rs
+  PROXY_IMAGE_NAME: corplink_proxy
 
 jobs:
   build-docker:
@@ -36,6 +37,8 @@ jobs:
         run: |
           IMAGE_ID=ghcr.io/${{ github.repository_owner }}/$IMAGE_NAME
           IMAGE_ID=$(echo $IMAGE_ID | tr '[A-Z]' '[a-z]')
+          PROXY_IMAGE_ID=ghcr.io/${{ github.repository_owner }}/$PROXY_IMAGE_NAME
+          PROXY_IMAGE_ID=$(echo $PROXY_IMAGE_ID | tr '[A-Z]' '[a-z]')
           PLATFORM="linux/amd64"
           [ -n "${{ github.event.inputs.platform }}" ] && PLATFORM="${{ github.event.inputs.platform }}"
           VERSION=$(echo "${{ github.ref }}" | sed -e 's,.*/\(.*\),\1,')
@@ -43,6 +46,7 @@ jobs:
           [ "$VERSION" == "master" ] && VERSION=latest
           [ -n "${{ github.event.inputs.tag }}" ] && VERSION="${{ github.event.inputs.tag }}"
           echo "image=$IMAGE_ID" >> $GITHUB_OUTPUT
+          echo "proxy_image=$PROXY_IMAGE_ID" >> $GITHUB_OUTPUT
           echo "platform=$PLATFORM" >> $GITHUB_OUTPUT
           echo "version=$VERSION" >> $GITHUB_OUTPUT
 
@@ -68,6 +72,20 @@ jobs:
           context: .
           push: true
           tags: ${{ steps.meta.outputs.image }}:${{ steps.meta.outputs.version }}
+          labels: runnumber=${{ github.run_id }}
+          provenance: false
+          platforms: ${{ steps.meta.outputs.platform }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build and Upload Image with Proxy
+        id: docker_build_proxy_image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile.proxy
+          push: true
+          tags: ${{ steps.meta.outputs.proxy_image }}:${{ steps.meta.outputs.version }}
           labels: runnumber=${{ github.run_id }}
           provenance: false
           platforms: ${{ steps.meta.outputs.platform }}

@@ -1,0 +1,7 @@
+FROM ghcr.io/hugefiver/corplink_rs
+
+COPY --from=ghcr.io/xtls/xray-core:latest /usr/local/bin/xray /usr/local/bin/xray
+COPY ./assets/start.sh /start.sh
+COPY ./assets/xray.json /etc/xray.json
+
+ENTRYPOINT [ "bash", "/start.sh" ]
