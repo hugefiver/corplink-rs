@@ -1,6 +1,6 @@
-FROM ghcr.io/hugefiver/corplink_rs
+FROM ghcr.io/hugefiver/corplink_rs:latest
 
-COPY --from=ghcr.io/xtls/xray-core:latest /usr/local/bin/xray /usr/local/bin/xray
+COPY --from=ghcr.io/xtls/xray-core:25.6.8 /usr/local/bin/xray /usr/local/bin/xray
 COPY ./assets/start.sh /start.sh
 COPY ./assets/xray.json /etc/xray.json
 

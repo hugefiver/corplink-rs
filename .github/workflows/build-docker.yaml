@@ -72,12 +72,17 @@ jobs:
         with:
           context: .
           push: true
+          load: true
           tags: ${{ steps.meta.outputs.image }}:${{ steps.meta.outputs.version }}
           labels: runnumber=${{ github.run_id }}
           provenance: false
           platforms: ${{ steps.meta.outputs.platform }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      - name: Tag image as latest
+        run: |
+          docker tag ${{ steps.meta.outputs.image }}:${{ steps.meta.outputs.version }} ${{ steps.meta.outputs.image }}:latest
 
       - name: Build and Upload Image with Proxy
         id: docker_build_proxy_image

@@ -18,7 +18,8 @@ RUN --mount=type=cache,target=/src/target \
     cargo build --release && \
     cp target/release/corplink-rs /
 
-FROM debian:bookworm-slim
+
+FROM debian:bookworm-slim AS corplink
 
 COPY --from=builder /corplink-rs /corplink-rs
 
