@@ -202,7 +202,7 @@ impl Client {
             .map(io::BufWriter::new)
             .unwrap();
         let c = self.cookie.lock().unwrap();
-        cookie_store::serde::json::save(&c, &mut file).expect("cannot store cookies")
+        cookie_store::serde::save(&c, &mut file, serde_json::to_string).expect("cannot store cookies")
     }
 
     async fn request<T: DeserializeOwned + fmt::Debug>(
@@ -244,18 +244,25 @@ impl Client {
             return Err(Error::Error("failed to parse response".to_string()));
         };
 
-        // use std::io::Write;
-        // let mut file = std::fs::OpenOptions::new()
-        //     .write(true)
-        //     .create(true)
-        //     .append(true)
-        //     .open("api_resp.json")
-        //     .unwrap();
-        // let _ = writeln!(file, "// {api:?}: {url}");
-        // let resp_str = serde_json::to_string(&resp).unwrap();
-        // let _ = writeln!(file, "{resp_str}\n");
+        if let Some(f) = self
+            .conf
+            .log_requests
+            .as_ref()
+            .and_then(|x| x.as_deref().get_value_no_zero_with_default("api_resp.json"))
+        {
+            use std::io::Write;
+            let mut file = std::fs::OpenOptions::new()
+                .write(true)
+                .create(true)
+                .append(true)
+                .open(f)
+                .unwrap();
+            let _ = writeln!(file, "// {api:?}: {url}");
+            let resp_str = serde_json::to_string(&resp).unwrap();
+            let _ = writeln!(file, "{resp_str}\n");
 
-        // log::debug!("api resp: {resp}");
+            log::debug!("api resp: {resp}");
+        }
 
         let resp: Resp<T> = serde_json::from_value(resp).map_err(|e| {
             log::error!("failed to parse response: {e}");

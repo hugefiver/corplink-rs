@@ -1,5 +1,6 @@
 use serde_with::{serde_as, DefaultOnNull};
 use std::fmt;
+use std::ops::Deref;
 use tokio::fs;
 
 use serde::{Deserialize, Serialize};
@@ -44,7 +45,7 @@ pub struct Config {
     pub interface_name: Option<String>,
     pub debug_wg: Option<bool>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub log_requests: Option<String>,
+    pub log_requests: Option<BoolOr<String>>,
     #[serde(skip_serializing)]
     pub conf_file: Option<String>,
     pub state: Option<State>,
@@ -57,6 +58,87 @@ pub struct Config {
 
     #[serde(default)]
     pub routing: RouteSetting,
+}
+
+#[serde_as]
+#[derive(Serialize, Deserialize, Clone)]
+#[serde(untagged)]
+pub enum BoolOr<T> {
+    Bool(bool),
+    Value(T),
+}
+
+impl<T> Default for BoolOr<T> {
+    fn default() -> Self {
+        BoolOr::Bool(false)
+    }
+}
+
+impl<T> BoolOr<T> {
+    pub fn as_bool(&self) -> bool {
+        matches!(self, BoolOr::Bool(true)) || matches!(self, BoolOr::Value(_))
+    }
+
+    pub fn is_true(&self) -> bool {
+        self.as_bool()
+    }
+
+    pub fn is_false(&self) -> bool {
+        !self.as_bool()
+    }
+
+    pub fn get_value(&self) -> Option<&T> {
+        match self {
+            BoolOr::Value(v) => Some(v),
+            _ => None,
+        }
+    }
+
+    pub fn get_value_with_default<'a>(&'a self, default: &'a T) -> &'a T {
+        match self {
+            BoolOr::Value(v) => v,
+            BoolOr::Bool(true) => default,
+            _ => default,
+        }
+    }
+
+    pub fn map<E>(self, f: impl FnOnce(T) -> E) -> BoolOr<E> {
+        match self {
+            BoolOr::Bool(b) => BoolOr::Bool(b),
+            BoolOr::Value(v) => BoolOr::Value(f(v)),
+        }
+    }
+
+    pub fn as_ref(&self) -> BoolOr<&T> {
+        match self {
+            BoolOr::Bool(b) => BoolOr::Bool(*b),
+            BoolOr::Value(v) => BoolOr::Value(v),
+        }
+    }
+
+    pub fn as_deref(&self) -> BoolOr<&T::Target>
+    where
+        T: Deref,
+    {
+        self.as_ref().map(|t| t.deref())
+    }
+}
+
+impl<T: PartialEq + Default> BoolOr<T> {
+    pub fn get_value_no_zero(&self) -> Option<&T> {
+        match self {
+            BoolOr::Value(v) if *v != T::default() => Some(v),
+            _ => None,
+        }
+    }
+
+    pub fn get_value_no_zero_with_default(self, default: T) -> Option<T> {
+        match self {
+            BoolOr::Value(v) if v != T::default() => Some(v),
+            BoolOr::Bool(true) => Some(default),
+            _ => None,
+        }
+    }
 }
 
 impl fmt::Display for Config {

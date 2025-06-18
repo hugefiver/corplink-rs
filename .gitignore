@@ -18,3 +18,7 @@
 libwg/libwg.a
 libwg/libwg.h
 libwg/wg.lib
+
+# config
+/corplink.json
+/corplink_cookies.json
