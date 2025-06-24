@@ -14,7 +14,8 @@ RUN --mount=type=cache,target=/go/pkg/mod \
     CGO_ENABLED=1 go build -trimpath -v -buildmode=c-archive ./libwg && \
     mv libwg.a libwg.h ..
 
-RUN --mount=type=cache,target=/src/target \
+RUN --mount=type=cache,target=/usr/local/cargo/registry \
+    --mount=type=cache,target=/src/target \
     cargo build --release && \
     cp target/release/corplink-rs /
 
