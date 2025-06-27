@@ -28,6 +28,8 @@ use crate::state::State;
 use crate::totp::{totp_offset, TIME_STEP};
 use crate::utils;
 
+// pub mod v2;
+
 const COOKIE_FILE_SUFFIX: &str = "cookies.json";
 const USER_AGENT: &str = "Android/2.2.19(CorpLink/2.2.19 (Huawei Duo 2; Android 15; en))";
 // const USER_AGENT: &str = "Linux/3.0.21(Corplink/3.0.21 (linux; HomoOS; en))";
@@ -820,7 +822,7 @@ impl Client {
         let route = match self.conf.routing.mode {
             RoutingMode::Split => {
                 let mut routes = wg_info.setting.vpn_route_split.split_off(0);
-                routes.append(&mut wg_info.setting.v6_route_split);
+                routes.append(&mut wg_info.setting.v6_route_split.unwrap_or_default());
                 if self.conf.routing.include_dynamic_domain_route_split {
                     if let Some(dyn_domains) = wg_info.setting.vpn_dynamic_domain_route_split.take()
                     {
@@ -840,7 +842,7 @@ impl Client {
                 .setting
                 .vpn_route_full
                 .drain(..)
-                .chain(wg_info.setting.v6_route_full.drain(..))
+                .chain(wg_info.setting.v6_route_full.unwrap_or_default().drain(..))
                 .collect(),
         };
 
